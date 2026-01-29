@@ -89,8 +89,8 @@ public class CedricBot {
 
     private static int parseIndex(String input, String prefix) {
         try {
-            int oneBase = Integer.parseInt(input.substring(prefix.length()).trim());
-            return oneBase - 1;
+            int oneBased = Integer.parseInt(input.substring(prefix.length()).trim());
+            return oneBased - 1;
         } catch (NumberFormatException e) {
             return -1;
         }
