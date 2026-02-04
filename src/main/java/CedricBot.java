@@ -6,28 +6,21 @@ public class CedricBot {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
         Task[] tasks = new Task[MAX_TASKS];
         int taskCount = 0;
 
-        System.out.println(LINE);
-        System.out.println("Hello! I'm CedricBot");
-        System.out.println("What can I do for you?");
-        System.out.println(LINE);
+        greetUser();
 
         while (true) {
             String input = scanner.nextLine().trim();
 
             if (input.equals("bye")) {
-                System.out.println(LINE);
-                System.out.println("Bye. Hope to see you again soon!");
-                System.out.println("CedricBot, Signing Out! ♥");
-                System.out.println(LINE);
+                sayBye();
                 break;
             }
 
             if (input.equals("list")) {
-                System.out.println(LINE);
+                printLine();
                 if (taskCount == 0) {
                     System.out.println("There are currently no tasks in your list yet.");
                 } else {
@@ -36,7 +29,7 @@ public class CedricBot {
                         System.out.println((i + 1) + "." + tasks[i]);
                     }
                 }
-                System.out.println(LINE);
+                printLine();
                 continue;
             }
 
@@ -45,10 +38,10 @@ public class CedricBot {
                 if (isValidIndex(index, taskCount)) {
                     tasks[index].markDone();
 
-                    System.out.println(LINE);
+                    printLine();
                     System.out.println("Nice! I've marked this task as done:");
                     System.out.println("  " + tasks[index]);
-                    System.out.println(LINE);
+                    printLine();
                 } else {
                     invalidIndex();
                 }
@@ -59,10 +52,10 @@ public class CedricBot {
                 if (isValidIndex(index, taskCount)) {
                     tasks[index].unmark();
 
-                    System.out.println(LINE);
+                    printLine();
                     System.out.println("OK, I've marked this task as not done yet.");
                     System.out.println("  " + tasks[index]);
-                    System.out.println(LINE);
+                    printLine();
                 } else {
                     invalidIndex();
                 }
@@ -112,28 +105,28 @@ public class CedricBot {
                 continue;
             }
 
-            System.out.println(LINE);
+            printLine();
             System.out.println("Incorrect command used :(");
-            System.out.println(LINE);
+            printLine();
         }
     }
 
     private static int addTask(Task[] tasks, int taskCount, Task task) {
         if (taskCount >= MAX_TASKS) {
-            System.out.println(LINE);
+            printLine();
             System.out.println("Your task list is full.");
-            System.out.println(LINE);
+            printLine();
             return taskCount;
         }
 
         tasks[taskCount] = task;
         taskCount++;
 
-        System.out.println(LINE);
+        printLine();
         System.out.println("Got it. I've added this task:");
         System.out.println("  " + task);
         System.out.println("Now you have " + taskCount + " tasks in the list.");
-        System.out.println(LINE);
+        printLine();
 
         return taskCount;
     }
@@ -152,17 +145,38 @@ public class CedricBot {
     }
 
     private static void invalidFormat(String expected) {
-        System.out.println(LINE);
+        printLine();
         System.out.println("OOPS!!! Invalid command format.");
         System.out.println("Expected: " + expected);
-        System.out.println(LINE);
+        printLine();
     }
 
     private static void invalidIndex() {
-        System.out.println(LINE);
+        printLine();
         System.out.println("Please give a valid task number.");
+        printLine();
+    }
+
+    private static void greetUser() {
+        printLine();
+        System.out.println("Hello! I'm CedricBot");
+        System.out.println("What can I do for you?");
+        printLine();
+    }
+
+    private static void sayBye() {
+        printLine();
+        System.out.println("Bye. Hope to see you again soon!");
+        System.out.println("CedricBot, Signing Out! ♥");
+        printLine();
+    }
+
+    private static void printLine() {
         System.out.println(LINE);
     }
 
+    private static void printMessage(String message) {
+        System.out.println(message);
+    }
 }
 
