@@ -61,9 +61,17 @@ public class CedricBot {
                 }
                 continue;
             }
-            //Level-4
-            if (input.startsWith("todo ")) {
-               String desc = input.substring("todo ".length()).trim();
+            //Level-4,5
+            if (input.startsWith("todo ") || input.equals("todo")) {
+               String desc = input.length() > "todo".length() ? input.substring("todo".length()).trim() : "";
+
+               if (desc.isEmpty()) {
+                   printLine();
+                   System.out.println("OOPS!!! The description of a todo cannot be empty. :(");
+                   printLine();
+                   continue;
+               }
+
                Task task = new Todo(desc);
                taskCount = addTask(tasks, taskCount, task);
                continue;
@@ -106,7 +114,7 @@ public class CedricBot {
             }
 
             printLine();
-            System.out.println("Incorrect command used :(");
+            System.out.println("OOPS!!! Incorrect command used :(");
             printLine();
         }
     }
@@ -153,7 +161,7 @@ public class CedricBot {
 
     private static void invalidIndex() {
         printLine();
-        System.out.println("Please give a valid task number.");
+        System.out.println("OOPS!!! Please give a valid task number.");
         printLine();
     }
 
@@ -173,10 +181,6 @@ public class CedricBot {
 
     private static void printLine() {
         System.out.println(LINE);
-    }
-
-    private static void printMessage(String message) {
-        System.out.println(message);
     }
 }
 
