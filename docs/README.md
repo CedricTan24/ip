@@ -1,4 +1,4 @@
-# CedricBot User Guide
+# cedricbot.CedricBot User Guide
 
 // Update the title above to match the actual product name
 

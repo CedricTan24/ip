@@ -1,3 +1,5 @@
+package cedricbot;
+
 import java.util.Scanner;
 
 public class CedricBot {
@@ -167,7 +169,7 @@ public class CedricBot {
 
     private static void greetUser() {
         printLine();
-        System.out.println("Hello! I'm CedricBot");
+        System.out.println("Hello! I'm cedricbot.CedricBot");
         System.out.println("What can I do for you?");
         printLine();
     }
@@ -175,7 +177,7 @@ public class CedricBot {
     private static void sayBye() {
         printLine();
         System.out.println("Bye. Hope to see you again soon!");
-        System.out.println("CedricBot, Signing Out! ♥");
+        System.out.println("cedricbot.CedricBot, Signing Out! ♥");
         printLine();
     }
 
