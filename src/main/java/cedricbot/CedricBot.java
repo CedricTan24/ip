@@ -1,14 +1,18 @@
 package cedricbot;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class CedricBot {
     private static final String LINE = "____________________________________________________________";
+    private static final String DATA_FILE = "data/cedricbot.txt";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         ArrayList<Task> tasks = new ArrayList<>();
+        loadTasks(tasks);
 
         greetUser();
 
@@ -38,6 +42,7 @@ public class CedricBot {
                 int index = parseIndex(input, "mark ");
                 if (isValidIndex(index, tasks.size())) {
                     tasks.get(index).markDone();
+                    saveTasks(tasks);
 
                     printLine();
                     System.out.println("Nice! I've marked this task as done:");
@@ -52,6 +57,7 @@ public class CedricBot {
                 int index = parseIndex(input, "unmark ");
                 if (isValidIndex(index, tasks.size())) {
                     tasks.get(index).unmark();
+                    saveTasks(tasks);
 
                     printLine();
                     System.out.println("OK, I've marked this task as not done yet.");
@@ -75,6 +81,7 @@ public class CedricBot {
 
                Task task = new Todo(desc);
                addTask(tasks, task);
+                saveTasks(tasks);
                continue;
             }
 
@@ -88,6 +95,7 @@ public class CedricBot {
                 String by = input.substring(byPos + " /by ".length()).trim();
                 Task task = new Deadline(desc, by);
                 addTask(tasks, task);
+                saveTasks(tasks);
                 continue;
             }
 
@@ -111,10 +119,11 @@ public class CedricBot {
 
                 Task task = new Event(desc, from, to);
                 addTask(tasks, task);
+                saveTasks(tasks);
                 continue;
             }
             //Level-6
-            if (input.startsWith("delete")) {
+            if (input.startsWith("delete ")) {
                 int index = parseIndex(input, "delete ");
 
                 if (!isValidIndex(index, tasks.size())) {
@@ -122,6 +131,7 @@ public class CedricBot {
                     continue;
                 }
                 Task removed = tasks.remove(index);
+                saveTasks(tasks);
 
                 printLine();
                 System.out.println("Noted. I've removed this task:");
@@ -145,6 +155,93 @@ public class CedricBot {
         System.out.println("  " + task);
         System.out.println("Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+    }
+    //Level-7
+    private static void loadTasks(ArrayList<Task> tasks) {
+        try {
+            File file = new File(DATA_FILE);
+
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            if (!file.exists()) {
+                file.createNewFile();
+                return;
+            }
+
+            Scanner fileScanner = new Scanner(file);
+
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine().trim();
+                if (!line.isEmpty()) {
+                    Task task = parseTask(line);
+                    if (task != null) {
+                        tasks.add(task);
+                    }
+                }
+            }
+
+            fileScanner.close();
+
+        } catch (Exception e) {
+            System.out.println("Error loading tasks.");
+        }
+    }
+
+    private static void saveTasks(ArrayList<Task> tasks) {
+        try {
+            File file = new File(DATA_FILE);
+
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            PrintWriter writer = new PrintWriter(file);
+
+            for (Task task : tasks) {
+                writer.println(task.toDataString());
+            }
+
+            writer.close();
+
+        } catch (Exception e) {
+            System.out.println("Error saving tasks.");
+        }
+    }
+
+    private static Task parseTask(String line) {
+        try {
+            String[] parts = line.split(" \\| ");
+
+            String type = parts[0];
+            boolean isDone = parts[1].equals("1");
+
+            Task task;
+
+            switch (type) {
+            case "T":
+                task = new Todo(parts[2]);
+                break;
+            case "D":
+                task = new Deadline(parts[2], parts[3]);
+                break;
+            case "E":
+                task = new Event(parts[2], parts[3], parts[4]);
+                break;
+            default:
+                return null;
+            }
+
+            if (isDone) {
+                task.markDone();
+            }
+
+            return task;
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static int parseIndex(String input, String prefix) {
