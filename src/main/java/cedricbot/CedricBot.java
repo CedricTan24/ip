@@ -1,15 +1,18 @@
 package cedricbot;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class CedricBot {
-    private static final int MAX_TASKS = 100;
     private static final String LINE = "____________________________________________________________";
+    private static final String DATA_FILE = "data/cedricbot.txt";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Task[] tasks = new Task[MAX_TASKS];
-        int taskCount = 0;
+        ArrayList<Task> tasks = new ArrayList<>();
+        loadTasks(tasks);
 
         greetUser();
 
@@ -23,12 +26,12 @@ public class CedricBot {
 
             if (input.equals("list")) {
                 printLine();
-                if (taskCount == 0) {
+                if (tasks.isEmpty()) {
                     System.out.println("There are currently no tasks in your list yet.");
                 } else {
                     System.out.println("Here are the tasks in your list:");
-                    for (int i = 0; i < taskCount; i++) {
-                        System.out.println((i + 1) + "." + tasks[i]);
+                    for (int i = 0; i < tasks.size(); i++) {
+                        System.out.println((i + 1) + "." + tasks.get(i));
                     }
                 }
                 printLine();
@@ -37,12 +40,13 @@ public class CedricBot {
 
             if (input.startsWith("mark ")) {
                 int index = parseIndex(input, "mark ");
-                if (isValidIndex(index, taskCount)) {
-                    tasks[index].markDone();
+                if (isValidIndex(index, tasks.size())) {
+                    tasks.get(index).markDone();
+                    saveTasks(tasks);
 
                     printLine();
                     System.out.println("Nice! I've marked this task as done:");
-                    System.out.println("  " + tasks[index]);
+                    System.out.println("  " + tasks.get(index));
                     printLine();
                 } else {
                     invalidIndex();
@@ -51,12 +55,13 @@ public class CedricBot {
             }
             if (input.startsWith("unmark ")) {
                 int index = parseIndex(input, "unmark ");
-                if (isValidIndex(index, taskCount)) {
-                    tasks[index].unmark();
+                if (isValidIndex(index, tasks.size())) {
+                    tasks.get(index).unmark();
+                    saveTasks(tasks);
 
                     printLine();
                     System.out.println("OK, I've marked this task as not done yet.");
-                    System.out.println("  " + tasks[index]);
+                    System.out.println("  " + tasks.get(index));
                     printLine();
                 } else {
                     invalidIndex();
@@ -75,7 +80,8 @@ public class CedricBot {
                }
 
                Task task = new Todo(desc);
-               taskCount = addTask(tasks, taskCount, task);
+               addTask(tasks, task);
+                saveTasks(tasks);
                continue;
             }
 
@@ -88,7 +94,8 @@ public class CedricBot {
                 String desc = input.substring("deadline ".length(), byPos).trim();
                 String by = input.substring(byPos + " /by ".length()).trim();
                 Task task = new Deadline(desc, by);
-                taskCount = addTask(tasks, taskCount, task);
+                addTask(tasks, task);
+                saveTasks(tasks);
                 continue;
             }
 
@@ -111,7 +118,26 @@ public class CedricBot {
                 }
 
                 Task task = new Event(desc, from, to);
-                taskCount = addTask(tasks, taskCount, task);
+                addTask(tasks, task);
+                saveTasks(tasks);
+                continue;
+            }
+            //Level-6
+            if (input.startsWith("delete ")) {
+                int index = parseIndex(input, "delete ");
+
+                if (!isValidIndex(index, tasks.size())) {
+                    invalidIndex();
+                    continue;
+                }
+                Task removed = tasks.remove(index);
+                saveTasks(tasks);
+
+                printLine();
+                System.out.println("Noted. I've removed this task:");
+                System.out.println("  " + removed);
+                System.out.println("Now you have " + tasks.size() + " tasks in the list.");
+                printLine();
                 continue;
             }
 
@@ -121,24 +147,101 @@ public class CedricBot {
         }
     }
 
-    private static int addTask(Task[] tasks, int taskCount, Task task) {
-        if (taskCount >= MAX_TASKS) {
-            printLine();
-            System.out.println("Your task list is full.");
-            printLine();
-            return taskCount;
-        }
-
-        tasks[taskCount] = task;
-        taskCount++;
+    private static void addTask(ArrayList<Task> tasks, Task task) {
+        tasks.add(task);
 
         printLine();
         System.out.println("Got it. I've added this task:");
         System.out.println("  " + task);
-        System.out.println("Now you have " + taskCount + " tasks in the list.");
+        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+    }
+    //Level-7
+    private static void loadTasks(ArrayList<Task> tasks) {
+        try {
+            File file = new File(DATA_FILE);
 
-        return taskCount;
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            if (!file.exists()) {
+                file.createNewFile();
+                return;
+            }
+
+            Scanner fileScanner = new Scanner(file);
+
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine().trim();
+                if (!line.isEmpty()) {
+                    Task task = parseTask(line);
+                    if (task != null) {
+                        tasks.add(task);
+                    }
+                }
+            }
+
+            fileScanner.close();
+
+        } catch (Exception e) {
+            System.out.println("Error loading tasks.");
+        }
+    }
+
+    private static void saveTasks(ArrayList<Task> tasks) {
+        try {
+            File file = new File(DATA_FILE);
+
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+
+            PrintWriter writer = new PrintWriter(file);
+
+            for (Task task : tasks) {
+                writer.println(task.toDataString());
+            }
+
+            writer.close();
+
+        } catch (Exception e) {
+            System.out.println("Error saving tasks.");
+        }
+    }
+
+    private static Task parseTask(String line) {
+        try {
+            String[] parts = line.split(" \\| ");
+
+            String type = parts[0];
+            boolean isDone = parts[1].equals("1");
+
+            Task task;
+
+            switch (type) {
+            case "T":
+                task = new Todo(parts[2]);
+                break;
+            case "D":
+                task = new Deadline(parts[2], parts[3]);
+                break;
+            case "E":
+                task = new Event(parts[2], parts[3], parts[4]);
+                break;
+            default:
+                return null;
+            }
+
+            if (isDone) {
+                task.markDone();
+            }
+
+            return task;
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static int parseIndex(String input, String prefix) {
@@ -150,8 +253,8 @@ public class CedricBot {
         }
     }
 
-    private static boolean isValidIndex(int index, int taskCount) {
-        return index >= 0 && index < taskCount;
+    private static boolean isValidIndex(int index, int size) {
+        return index >= 0 && index < size;
     }
 
     private static void invalidFormat(String expected) {
@@ -169,7 +272,7 @@ public class CedricBot {
 
     private static void greetUser() {
         printLine();
-        System.out.println("Hello! I'm cedricbot.CedricBot");
+        System.out.println("Hello! I'm CedricBot");
         System.out.println("What can I do for you?");
         printLine();
     }
@@ -177,7 +280,7 @@ public class CedricBot {
     private static void sayBye() {
         printLine();
         System.out.println("Bye. Hope to see you again soon!");
-        System.out.println("cedricbot.CedricBot, Signing Out! ♥");
+        System.out.println("CedricBot, Signing Out! ♥");
         printLine();
     }
 
