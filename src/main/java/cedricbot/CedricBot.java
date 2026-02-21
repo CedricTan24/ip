@@ -1,291 +1,159 @@
 package cedricbot;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Scanner;
-
 public class CedricBot {
-    private static final String LINE = "____________________________________________________________";
     private static final String DATA_FILE = "data/cedricbot.txt";
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        ArrayList<Task> tasks = new ArrayList<>();
-        loadTasks(tasks);
+    private final Ui ui;
+    private final Storage storage;
+    private final TaskList tasks;
 
-        greetUser();
+    public CedricBot() {
+        ui = new Ui();
+        storage = new Storage(DATA_FILE);
+
+        TaskList loaded;
+        try {
+            loaded = new TaskList(storage.load());
+        } catch (Exception e) {
+            loaded = new TaskList();
+        }
+        tasks = loaded;
+    }
+
+    public void run() {
+        ui.showWelcome();
 
         while (true) {
-            String input = scanner.nextLine().trim();
+            String input = ui.readCommand();
 
             if (input.equals("bye")) {
-                sayBye();
+                ui.showBye();
                 break;
             }
 
             if (input.equals("list")) {
-                printLine();
                 if (tasks.isEmpty()) {
-                    System.out.println("There are currently no tasks in your list yet.");
+                    ui.showNoTasks();
                 } else {
-                    System.out.println("Here are the tasks in your list:");
+                    ui.showListHeader();
                     for (int i = 0; i < tasks.size(); i++) {
-                        System.out.println((i + 1) + "." + tasks.get(i));
+                        ui.showListItem(i + 1, tasks.get(i));
                     }
+                    ui.closeList();
                 }
-                printLine();
                 continue;
             }
 
             if (input.startsWith("mark ")) {
-                int index = parseIndex(input, "mark ");
-                if (isValidIndex(index, tasks.size())) {
+                int index = Parser.parseIndex(input, "mark ");
+                if (Parser.isValidIndex(index, tasks.size())) {
                     tasks.get(index).markDone();
-                    saveTasks(tasks);
-
-                    printLine();
-                    System.out.println("Nice! I've marked this task as done:");
-                    System.out.println("  " + tasks.get(index));
-                    printLine();
+                    save();
+                    ui.showMark(tasks.get(index));
                 } else {
-                    invalidIndex();
+                    ui.showInvalidIndex();
                 }
                 continue;
             }
+
             if (input.startsWith("unmark ")) {
-                int index = parseIndex(input, "unmark ");
-                if (isValidIndex(index, tasks.size())) {
+                int index = Parser.parseIndex(input, "unmark ");
+                if (Parser.isValidIndex(index, tasks.size())) {
                     tasks.get(index).unmark();
-                    saveTasks(tasks);
-
-                    printLine();
-                    System.out.println("OK, I've marked this task as not done yet.");
-                    System.out.println("  " + tasks.get(index));
-                    printLine();
+                    save();
+                    ui.showUnmark(tasks.get(index));
                 } else {
-                    invalidIndex();
+                    ui.showInvalidIndex();
                 }
                 continue;
             }
-            //Level-4,5
+
             if (input.startsWith("todo ") || input.equals("todo")) {
-               String desc = input.length() > "todo".length() ? input.substring("todo".length()).trim() : "";
+                String desc = input.length() > "todo".length()
+                        ? input.substring("todo".length()).trim()
+                        : "";
 
-               if (desc.isEmpty()) {
-                   printLine();
-                   System.out.println("OOPS!!! The description of a todo cannot be empty. :(");
-                   printLine();
-                   continue;
-               }
+                if (desc.isEmpty()) {
+                    ui.showTodoEmptyError();
+                    continue;
+                }
 
-               Task task = new Todo(desc);
-               addTask(tasks, task);
-                saveTasks(tasks);
-               continue;
+                Task task = new Todo(desc);
+                tasks.add(task);
+                save();
+                ui.showAddTask(task, tasks.size());
+                continue;
             }
 
             if (input.startsWith("deadline ")) {
                 int byPos = input.indexOf(" /by ");
                 if (byPos == -1) {
-                    invalidFormat("deadline <description> /by <by>");
+                    ui.showInvalidFormat("deadline <description> /by <by>");
                     continue;
                 }
                 String desc = input.substring("deadline ".length(), byPos).trim();
                 String by = input.substring(byPos + " /by ".length()).trim();
                 Task task = new Deadline(desc, by);
-                addTask(tasks, task);
-                saveTasks(tasks);
+
+                tasks.add(task);
+                save();
+                ui.showAddTask(task, tasks.size());
                 continue;
             }
 
             if (input.startsWith("event ")) {
-                int fromPos = input.indexOf("/from");
-                int toPos = input.indexOf("/to");
+
+                int fromPos = input.indexOf(" /from ");
+                int toPos = input.indexOf(" /to ");
 
                 if (fromPos == -1 || toPos == -1 || toPos < fromPos) {
-                    invalidFormat("event <description> /from <from> /to <to>");
+                    ui.showInvalidFormat("event <description> /from <from> /to <to>");
                     continue;
                 }
 
                 String desc = input.substring("event ".length(), fromPos).trim();
-                String from = input.substring(fromPos + "/from".length(), toPos).trim();
-                String to = input.substring(toPos + "/to".length()).trim();
+                String from = input.substring(fromPos + " /from ".length(), toPos).trim();
+                String to = input.substring(toPos + " /to ".length()).trim();
 
                 if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
-                    invalidFormat("event <description> /from <from> /to <to>");
+                    ui.showInvalidFormat("event <description> /from <from> /to <to>");
                     continue;
                 }
 
                 Task task = new Event(desc, from, to);
-                addTask(tasks, task);
-                saveTasks(tasks);
+                tasks.add(task);
+                save();
+                ui.showAddTask(task, tasks.size());
                 continue;
             }
-            //Level-6
-            if (input.startsWith("delete ")) {
-                int index = parseIndex(input, "delete ");
 
-                if (!isValidIndex(index, tasks.size())) {
-                    invalidIndex();
+            if (input.startsWith("delete ")) {
+                int index = Parser.parseIndex(input, "delete ");
+                if (!Parser.isValidIndex(index, tasks.size())) {
+                    ui.showInvalidIndex();
                     continue;
                 }
-                Task removed = tasks.remove(index);
-                saveTasks(tasks);
 
-                printLine();
-                System.out.println("Noted. I've removed this task:");
-                System.out.println("  " + removed);
-                System.out.println("Now you have " + tasks.size() + " tasks in the list.");
-                printLine();
+                Task removed = tasks.remove(index);
+                save();
+                ui.showDeleteTask(removed, tasks.size());
                 continue;
             }
 
-            printLine();
-            System.out.println("OOPS!!! Incorrect command used :(");
-            printLine();
+            ui.showUnknownCommand();
         }
     }
 
-    private static void addTask(ArrayList<Task> tasks, Task task) {
-        tasks.add(task);
-
-        printLine();
-        System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
-        printLine();
-    }
-    //Level-7
-    private static void loadTasks(ArrayList<Task> tasks) {
+    private void save() {
         try {
-            File file = new File(DATA_FILE);
-
-            if (file.getParentFile() != null) {
-                file.getParentFile().mkdirs();
-            }
-
-            if (!file.exists()) {
-                file.createNewFile();
-                return;
-            }
-
-            Scanner fileScanner = new Scanner(file);
-
-            while (fileScanner.hasNextLine()) {
-                String line = fileScanner.nextLine().trim();
-                if (!line.isEmpty()) {
-                    Task task = parseTask(line);
-                    if (task != null) {
-                        tasks.add(task);
-                    }
-                }
-            }
-
-            fileScanner.close();
-
-        } catch (Exception e) {
-            System.out.println("Error loading tasks.");
-        }
-    }
-
-    private static void saveTasks(ArrayList<Task> tasks) {
-        try {
-            File file = new File(DATA_FILE);
-
-            if (file.getParentFile() != null) {
-                file.getParentFile().mkdirs();
-            }
-
-            PrintWriter writer = new PrintWriter(file);
-
-            for (Task task : tasks) {
-                writer.println(task.toDataString());
-            }
-
-            writer.close();
-
+            storage.save(tasks.getTasks());
         } catch (Exception e) {
             System.out.println("Error saving tasks.");
         }
     }
 
-    private static Task parseTask(String line) {
-        try {
-            String[] parts = line.split(" \\| ");
-
-            String type = parts[0];
-            boolean isDone = parts[1].equals("1");
-
-            Task task;
-
-            switch (type) {
-            case "T":
-                task = new Todo(parts[2]);
-                break;
-            case "D":
-                task = new Deadline(parts[2], parts[3]);
-                break;
-            case "E":
-                task = new Event(parts[2], parts[3], parts[4]);
-                break;
-            default:
-                return null;
-            }
-
-            if (isDone) {
-                task.markDone();
-            }
-
-            return task;
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static int parseIndex(String input, String prefix) {
-        try {
-            int oneBased = Integer.parseInt(input.substring(prefix.length()).trim());
-            return oneBased - 1;
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-
-    private static boolean isValidIndex(int index, int size) {
-        return index >= 0 && index < size;
-    }
-
-    private static void invalidFormat(String expected) {
-        printLine();
-        System.out.println("OOPS!!! Invalid command format.");
-        System.out.println("Expected: " + expected);
-        printLine();
-    }
-
-    private static void invalidIndex() {
-        printLine();
-        System.out.println("OOPS!!! Please give a valid task number.");
-        printLine();
-    }
-
-    private static void greetUser() {
-        printLine();
-        System.out.println("Hello! I'm CedricBot");
-        System.out.println("What can I do for you?");
-        printLine();
-    }
-
-    private static void sayBye() {
-        printLine();
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println("CedricBot, Signing Out! ♥");
-        printLine();
-    }
-
-    private static void printLine() {
-        System.out.println(LINE);
+    public static void main(String[] args) {
+        new CedricBot().run();
     }
 }
 

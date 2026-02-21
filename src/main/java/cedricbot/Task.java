@@ -18,6 +18,10 @@ public abstract class Task {
     }
 
     public String getStatusIcon() {
+        return isDone ? "X" : " ";
+    }
+
+    public String getStatusForFile() {
         return isDone ? "1" : "0";
     }
 

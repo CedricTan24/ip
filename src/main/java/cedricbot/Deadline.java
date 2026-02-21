@@ -13,7 +13,8 @@ public class Deadline extends Task{
         return "[D]" + super.toString() + " (by: " + by + ")";
     }
 
+    @Override
     public String toDataString() {
-        return "D | " + getStatusIcon() + " | " + description + " | " + by;
+        return "D | " + getStatusForFile() + " | " + description + " | " + by;
     }
 }

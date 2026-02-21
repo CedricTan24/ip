@@ -10,7 +10,8 @@ public class Todo extends Task {
         return "[T]" + super.toString();
     }
 
+    @Override
     public String toDataString() {
-        return "T | " + getStatusIcon() + " | " + description;
+        return "T | " + getStatusForFile() + " | " + description;
     }
 }
