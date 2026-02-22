@@ -1,5 +1,7 @@
 package cedricbot;
 
+import java.util.ArrayList;
+
 public class CedricBot {
     private static final String DATA_FILE = "data/cedricbot.txt";
 
@@ -137,6 +139,19 @@ public class CedricBot {
                 Task removed = tasks.remove(index);
                 save();
                 ui.showDeleteTask(removed, tasks.size());
+                continue;
+            }
+
+            if (input.startsWith("find")) {
+                String keyword = input.substring("find".length()).trim();
+
+                if (keyword.isEmpty()) {
+                    ui.showError("OOPS!!! The keyword to find cannot be empty.");
+                    continue;
+                }
+
+                ArrayList<Task> matches = tasks.find(keyword);
+                ui.showFindResults(matches);
                 continue;
             }
 

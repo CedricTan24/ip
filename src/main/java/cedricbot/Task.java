@@ -31,4 +31,8 @@ public abstract class Task {
     }
 
     public abstract String toDataString();
+
+    public String getDescription() {
+        return description;
+    }
 }
