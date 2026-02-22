@@ -1,5 +1,6 @@
 package cedricbot;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Ui {
@@ -57,6 +58,12 @@ public class Ui {
         showLine();
     }
 
+    public void showError(String message) {
+        showLine();
+        System.out.println(message);
+        showLine();
+    }
+
     public void showAddTask(Task task, int size) {
         showLine();
         System.out.println("Got it. I've added this task:");
@@ -103,6 +110,19 @@ public class Ui {
     }
 
     public void closeList() {
+        showLine();
+    }
+
+    public void showFindResults(ArrayList<Task> matches) {
+        showLine();
+        if (matches.isEmpty()) {
+            System.out.println("No matching tasks found.");
+        } else {
+            System.out.println("Here are the matching tasks in your list:");
+            for (int i = 0; i < matches.size(); i++) {
+                System.out.println((i + 1) + "." + matches.get(i));
+            }
+        }
         showLine();
     }
 }
