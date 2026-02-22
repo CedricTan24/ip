@@ -1,3 +1,10 @@
+/**
+ * Loads tasks from the data file.
+ *
+ * @return A list of tasks loaded from storage.
+ * @throws Exception If file operates fail.
+ */
+
 package cedricbot;
 
 import java.io.File;
