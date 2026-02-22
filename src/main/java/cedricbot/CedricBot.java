@@ -2,6 +2,10 @@ package cedricbot;
 
 import java.util.ArrayList;
 
+/**
+ * Main entry point of the CedricBot application
+ * Handles program execution and other UI, storage and task operations.
+ */
 public class CedricBot {
     private static final String DATA_FILE = "data/cedricbot.txt";
 

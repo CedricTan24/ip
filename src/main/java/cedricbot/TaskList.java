@@ -1,3 +1,7 @@
+/**
+ * Adds a task to the task list
+ */
+
 package cedricbot;
 
 import java.util.ArrayList;
@@ -36,6 +40,12 @@ public class TaskList {
     public ArrayList<Task> getTasks() {
         return tasks;
     }
+
+    /**
+     * Finds and returns all tasks that contain the given keyword.
+     * @param keyword The keyword to search for.
+     * @return A list of matching tasks to the keyword.
+     */
 
     public ArrayList<Task> find(String keyword) {
         ArrayList<Task> matches = new ArrayList<>();

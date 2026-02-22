@@ -14,6 +14,13 @@ public class Parser {
         return index >= 0 && index < size;
     }
 
+    /**
+     * Extracts the keyword from a find command.
+     *
+     * @param input Full user input.
+     * @return The keyword to search.
+     * @throws Exception If keyword is empty.
+     */
     public static String parseFind(String input) throws Exception {
         String keyword = input.substring("find".length()).trim();
 

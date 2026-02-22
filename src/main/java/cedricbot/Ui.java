@@ -1,3 +1,9 @@
+/**
+ * Displays the list of tasks that match a search.
+ *
+ * @param matches List of matching tasks.
+ */
+
 package cedricbot;
 
 import java.util.ArrayList;
